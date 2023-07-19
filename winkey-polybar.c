@@ -8,12 +8,15 @@
 #include <errno.h>
 
 #define EVENT_FP "/dev/input/event2"
+#define KEYCODE 125
+#define KEYDOWN_TODO (system("xdotool search --class polybar | while read w; do xdotool windowmap $w; done"))
+#define KEYUP_TODO (system("xdotool search --class polybar | while read w; do xdotool windowunmap $w; done"))
 
 int main(void){
 
 	struct input_event event;
 	struct pollfd pollfd;
-	int event_fd, ret;
+	int event_fd, ret, event_fd_nu;
 
 	// 打开 event 文件
 	event_fd = open(EVENT_FP, O_RDONLY);
@@ -25,6 +28,7 @@ int main(void){
 	// 初始化 pollfd
 	pollfd.fd = event_fd;
 	// 循环读取 event 文件
+	event_fd_nu = 0; // 读取到的字节数
 	while(true){
 		// 等待 event 文件可读 
 		pollfd.events = POLLIN;
@@ -35,25 +39,33 @@ int main(void){
 			break;
 		}
 		// 读取 event 文件
-		ret = read(event_fd, &event, sizeof(event));
-		if(ret != sizeof(event)){
+		ret = read(event_fd, ((char *)(&event))+event_fd_nu, sizeof(event)-event_fd_nu);
+		if(ret < 0){
 			perror(EVENT_FP);
+			return EXIT_FAILURE;
 		}
-		// 解析 event 事件
-		if(event.type == EV_KEY){
-			if(event.value == 0 || event.value == 1){
-				//printf("key %d %s\n", event.code, event.value?"Pressed":"Released");
-				if(event.code == 125 && event.value) // 按下 Win 键
-					system("xdotool search --class polybar | while read w; do xdotool windowmap $w; done");
-				else if(event.code == 125) // 抬起 Win 键
-					system("xdotool search --class polybar | while read w; do xdotool windowunmap $w; done");
-			}
-		}/*else{
-			//printf("type=%x %d %d\n", event.type, event.code, event.value);
-		}*/
+		if(event_fd_nu + ret < sizeof(event)){
+			// printf("Get %d data\n", ret);
+			continue;
+		}else{
+			// 解析 event 事件
+			if(event.type == EV_KEY){
+				if(event.value == 0 || event.value == 1){
+					//printf("key %d %s\n", event.code, event.value?"Pressed":"Released");
+					if(event.code == KEYCODE && event.value){ // 按下 Win 键
+						KEYDOWN_TODO;
+					}else if(event.code == KEYCODE){ // 抬起 Win 键
+						KEYUP_TODO;
+					}
+				}
+			}/*else{
+				//printf("type=%x %d %d\n", event.type, event.code, event.value);
+			}*/
+			event_fd_nu = 0;
+		}
 	}
 
 	close(event_fd);
-	return 0;
+	return EXIT_SUCCESS;
 }
 
