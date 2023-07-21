@@ -1,71 +1,87 @@
 #include <stdio.h>
-#include <fcntl.h>
-#include <unistd.h>
 #include <stdbool.h>
-#include <linux/input.h>
 #include <stdlib.h>
-#include <poll.h>
 #include <errno.h>
+#include <string.h>
+#include <signal.h>
 
-#define EVENT_FP "/dev/input/event2"
+#include "file_read.h"
+
 #define KEYCODE 125
 #define KEYDOWN_TODO (system("xdotool search --class polybar | while read w; do xdotool windowmap $w; done"))
 #define KEYUP_TODO (system("xdotool search --class polybar | while read w; do xdotool windowunmap $w; done"))
 
+// 清理
+void clean_up(int sig){
+	file_read_free();
+	exit(sig);
+}
+
 int main(void){
 
-	struct input_event event;
-	struct pollfd pollfd;
-	int event_fd, ret, event_fd_nu;
+	int _ret;
+	bool is_down;
 
-	// 打开 event 文件
-	event_fd = open(EVENT_FP, O_RDONLY);
-	if(event_fd < 0){
-		perror(EVENT_FP);
-		return -1;
+	/*
+	  if we receive a signal, we want to exit nicely, in
+	  order not to leave the keyboard in an unusable mode
+	*/
+	signal(SIGHUP, clean_up);
+	signal(SIGINT, clean_up);
+	signal(SIGQUIT, clean_up);
+	signal(SIGILL, clean_up);
+	signal(SIGTRAP, clean_up);
+	signal(SIGABRT, clean_up);
+	signal(SIGIOT, clean_up);
+	signal(SIGFPE, clean_up);
+	signal(SIGKILL, clean_up);
+	signal(SIGUSR1, clean_up);
+	signal(SIGSEGV, clean_up);
+	signal(SIGUSR2, clean_up);
+	signal(SIGPIPE, clean_up);
+	signal(SIGTERM, clean_up);
+#ifdef SIGSTKFLT
+	signal(SIGSTKFLT, clean_up);
+#endif
+	//signal(SIGCHLD, clean_up);
+	signal(SIGCONT, clean_up);
+	signal(SIGSTOP, clean_up);
+	signal(SIGTSTP, clean_up);
+	signal(SIGTTIN, clean_up);
+	signal(SIGTTOU, clean_up);
+
+	// 初始化 file_read
+	if((_ret = file_read_init()) < 0){
+		fprintf(stderr, "file_read_init():%s", strerror(-_ret));
+		return EXIT_FAILURE;
 	}
 
-	// 初始化 pollfd
-	pollfd.fd = event_fd;
-	// 循环读取 event 文件
-	event_fd_nu = 0; // 读取到的字节数
+	// 获取键盘输入
+	is_down = false; // 防止多次显示
 	while(true){
-		// 等待 event 文件可读 
-		pollfd.events = POLLIN;
-		if(poll(&pollfd, 1, -1) == -1){
-			if(errno == EAGAIN || errno == EINTR) // 忽略跳过伪异常（EAGAIN: 资源暂时不可用，EINTR: 信号中断了系统调用）
-				continue;
-			perror("poll()");
-			break;
-		}
-		// 读取 event 文件
-		ret = read(event_fd, ((char *)(&event))+event_fd_nu, sizeof(event)-event_fd_nu);
-		if(ret < 0){
-			perror(EVENT_FP);
+		bool is_release;
+		int key;
+
+		// 获取键盘输入 
+		key = next_key(&is_release);
+		// 错误处理
+		if(key < 0){
+			fprintf(stderr, "next_key():%s", strerror(-key));
 			return EXIT_FAILURE;
 		}
-		if(event_fd_nu + ret < sizeof(event)){
-			// printf("Get %d data\n", ret);
-			continue;
-		}else{
-			// 解析 event 事件
-			if(event.type == EV_KEY){
-				if(event.value == 0 || event.value == 1){
-					//printf("key %d %s\n", event.code, event.value?"Pressed":"Released");
-					if(event.code == KEYCODE && event.value){ // 按下 Win 键
-						KEYDOWN_TODO;
-					}else if(event.code == KEYCODE){ // 抬起 Win 键
-						KEYUP_TODO;
-					}
-				}
-			}/*else{
-				//printf("type=%x %d %d\n", event.type, event.code, event.value);
-			}*/
-			event_fd_nu = 0;
+		// 解析键盘
+		if(key == KEYCODE){
+			if(is_release){
+				KEYUP_TODO; // 键抬起
+				is_down = false;
+			}else if(!is_down){
+				KEYDOWN_TODO; // 键按下
+				is_down = true;
+			}
 		}
 	}
 
-	close(event_fd);
+	file_read_free();
 	return EXIT_SUCCESS;
 }
 
