@@ -56,9 +56,9 @@ Different from before, you can now modify the default configuration by passing i
 
 不同于之前，现在你可以通过在 make 时传入 KEYCODE 和 REGEX 参数来修改默认配置，比如 `make KEYCODE=56 REGEX="eww-.*"`，这会使它通过 alt 键管理 eww 窗口的显示（或许你的 alt 键的 keycode 不是 56）。
 
-You can get the keycode by using `showkey -k`. For REGEX, since it replaces the location in the source code directly, a translation is performed when you use `"` and `\\`. And also note to use posix ere instead of the pcre.
+You can get the keycode by using `showkey -k`. For REGEX, since it replaces the location in the source code directly, a translation is performed when you use `"` and `\`. Also note that regular expressions require the posix ere standard.
 
-你可以使用`showkey -k` 获取按键的 keycode，对于 REGEX，由于它会直接替换源码中的位置，所以当使用 `"` 和 `\\` 时需要进行一次转译，并且注意需要使用 posix ere 而不是 pcre 标准。
+你可以使用`showkey -k` 获取按键的 keycode，对于 REGEX，由于它会直接替换源码中的位置，所以当使用 `"` 和 `\` 时需要进行一次转译。并且注意，正则表达式需要使用 posix ere 标准。
 
 I highly recommend to use `xdotool search --class "<your_regex>"` to test your regex expression if you want to change it in order to avoid unexpected results.
 
