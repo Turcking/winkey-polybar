@@ -22,8 +22,9 @@ static const char *conspath[] = {
 
 // 判断 fd 是否为一个 console
 #define IS_A_CONSOLE(fd) ({ \
+		typeof(fd) _fd = fd; \
 		char arg; \
-		(isatty(fd) && ioctl(fd, KDGKBTYPE, &arg) == 0 && ((arg == KB_101) || (arg == KB_84))); \
+		(isatty(_fd) && ioctl(_fd, KDGKBTYPE, &arg) == 0 && ((arg == KB_101) || (arg == KB_84))); \
 	})
 
 static int fd = -1;

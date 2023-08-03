@@ -1,7 +1,10 @@
 #ifndef __FILE_READ__
 #define __FILE_READ__
 
+#include <stdbool.h>
+
 // file_read 的初始化函数
+// 成功返回 EXIT_SUCCESS，失败返回 -errno
 extern int file_read_init(void);
 
 // 获取一个 key
