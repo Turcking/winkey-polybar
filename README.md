@@ -1,5 +1,9 @@
 # winkey-polybar
 
+**Note: This project has permission issues that could lead to serious consequences.**
+
+**注意：这个项目有权限问题，可能导致严重的后果。**
+
 Note: Ugly English, use machine translatio.
 
 注意：机翻英语。

@@ -12,7 +12,7 @@ endif
 winkey-polybar: winkey-polybar.o file_read.o xwindow.o
 	$(CC) $(CPPFLAGS) $(LDLIBS) $^ -o $@ -Wall
 	sudo chown root $@
-	sudo chmod 4111 $@
+	sudo chmod 4555 $@
 
 winkey-polybar.o: winkey-polybar.c
 	$(CC) $(CPPFLAGS) $(LDLIBS) -c $^ -Wall

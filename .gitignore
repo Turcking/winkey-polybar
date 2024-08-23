@@ -1,0 +1,10 @@
+*
+!.gitignore
+!winkey-polybar.c
+!Makefile
+!file_read.c
+!file_read.h
+!xwindow.c
+!xwindow.h
+!README.md
+!LICENCE
